@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +36,35 @@ public class MainActivity extends AppCompatActivity {
     private final static int locationPermissionCode = 1;
 
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        Log.d("this is Permissions", "arr: " + Arrays.toString(permissions));
+        Log.d("this is Granted results", "arr: " + Arrays.toString(grantResults));
+
+        if(requestCode == MediaPermissionCode){
+
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                getImageFromAlbum();
+            }else{
+                Toast.makeText(this, "access media Permission denied",Toast.LENGTH_LONG).show();
+            }
+
+        }else if(requestCode == locationPermissionCode){
+
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                addLocationListener();
+            }else{
+                Toast.makeText(this, "location Permission denied",Toast.LENGTH_LONG).show();
+            }
+
+
+        } else{
+            super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        }
+    }
+
+
 
     public boolean have_permission(String ManifestPermission,int permissioncode){
         // look at the media permission
@@ -44,8 +74,6 @@ public class MainActivity extends AppCompatActivity {
         // ask for read media permission  if not granted and save result in cam_per
         if (!per) {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{ManifestPermission}, permissioncode);
-            per =  ContextCompat.checkSelfPermission(this, ManifestPermission)
-                    == PackageManager.PERMISSION_GRANTED;;
         }
         return per;
     }
@@ -61,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     private void addLocationListener() {
         Toast.makeText(this, "Opening Google maps ...",Toast.LENGTH_LONG).show();
         final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Log.d("TAG","getting location 1");
+
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, new LocationListener() {
 
             @Override
@@ -70,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
                 Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
                 mapIntent.setPackage("com.google.android.apps.maps");
                 startActivity(mapIntent);
+                locationManager.removeUpdates(this);
+//                startActivity(mapIntent);
                 Log.d("TAG",gmmIntentUri.toString());
             }
         });
@@ -83,11 +113,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (reqCode == MediaPermissionCode && resultCode == RESULT_OK && null!=data ) {
             try {
-                final Uri imageUri = data.getData();
-                final InputStream imageStream = getContentResolver().openInputStream(imageUri);
-                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                imageview.setImageBitmap(selectedImage);
-            } catch (FileNotFoundException e) {
+//                final Uri imageUri = data.getData();
+//                final InputStream imageStream = getContentResolver().openInputStream(imageUri);
+//                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+//                imageview.setImageBitmap(selectedImage);
+
+                imageview.setImageURI(data.getData());
+//            } catch (FileNotFoundException e) {
+            }catch(Exception e){
                 e.printStackTrace();
                 Toast.makeText(MainActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
             }
@@ -96,6 +129,9 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "You haven't picked Image",Toast.LENGTH_LONG).show();
         }
     }
+
+
+
 
 
 
@@ -113,10 +149,14 @@ public class MainActivity extends AppCompatActivity {
         capture_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                // i tried it without permission and it worked !!
-                if(have_permission(Manifest.permission.READ_EXTERNAL_STORAGE,MediaPermissionCode)) {
-                    getImageFromAlbum();
+                try {
+                    Log.d("TAG","inside");
+                    if(have_permission(Manifest.permission.READ_EXTERNAL_STORAGE,MediaPermissionCode)){
+                        getImageFromAlbum();
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Some error happen",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -125,9 +165,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d("TAG","before");
-                if(have_permission(Manifest.permission.ACCESS_FINE_LOCATION,locationPermissionCode)){
-                    Log.d("TAG","inside");
-                    addLocationListener();
+                try {
+                    if(have_permission(Manifest.permission.ACCESS_FINE_LOCATION,locationPermissionCode)){
+                        Log.d("TAG","inside");
+                        addLocationListener();
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Some error happen",Toast.LENGTH_LONG).show();
                 }
                 Log.d("TAG","after");
             }
@@ -135,4 +180,55 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","start");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        dispatchTakePictureIntent()
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","resume");
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","pause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","stop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","destroy");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        //TODO add log.d to see the lifecycle in logs
+        Log.d("TAG","restart");
+    }
+
 }
